@@ -1,0 +1,1107 @@
+<title>Client Hunt</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky brand bar with tabs; one working view at a time; lead details slide in from the right as a drawer. */
+:root {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --surface-2: #f6f8fb;
+  --ink: #0b0d12;
+  --muted: #5b6270;
+  --line: #dde2ea;
+  --accent: #3b78db;
+  --accent-soft: #e6eefb;
+  --accent-ink: #ffffff;
+  --good: #1d8f5a;
+  --good-soft: #e3f4ec;
+  --warn: #a8700a;
+  --warn-soft: #fbf1dc;
+  --bad: #c7392f;
+  --bad-soft: #fbe6e4;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .06);
+  --font-display: "Poppins", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1016; --surface: #151a23; --surface-2: #1a2030; --ink: #e9edf4; --muted: #98a1b2;
+    --line: #283041; --accent: #6f9ff0; --accent-soft: #1c2a44; --accent-ink: #0b0d12;
+    --good: #4cc48a; --good-soft: #13291f; --warn: #e2a93b; --warn-soft: #2d2412; --bad: #ef6b60; --bad-soft: #321816;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1016; --surface: #151a23; --surface-2: #1a2030; --ink: #e9edf4; --muted: #98a1b2;
+  --line: #283041; --accent: #6f9ff0; --accent-soft: #1c2a44; --accent-ink: #0b0d12;
+  --good: #4cc48a; --good-soft: #13291f; --warn: #e2a93b; --warn-soft: #2d2412; --bad: #ef6b60; --bad-soft: #321816;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Top bar */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top-inner { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px 0; display: flex; flex-direction: column; gap: 10px; }
+.brandrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { font-size: 22px; font-weight: 700; }
+.brand .by { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--muted); }
+.brand .by b { color: var(--accent); font-weight: 600; }
+.conn { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { border: 0; background: none; padding: 10px 14px 12px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .count { font-size: 12px; color: var(--muted); margin-left: 4px; font-weight: 500; }
+
+main { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 64px; display: flex; flex-direction: column; gap: 20px; }
+
+/* Generic pieces */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.panel-head h2 { font-size: 17px; font-weight: 600; }
+.sub { color: var(--muted); font-size: 13.5px; }
+.eyebrow { font-family: var(--font-display); font-size: 11.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 20px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.small { padding: 5px 10px; font-size: 13px; border-radius: 8px; }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.good { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.chip.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.chip.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.accent { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+label.field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--muted); min-width: 0; }
+input[type=text], input[type=email], input[type=url], input[type=number], input[type=date], input[type=tel], select, textarea {
+  width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 9px 11px; font-size: 14.5px; font-weight: 400; color: var(--ink); min-width: 0;
+}
+textarea { resize: vertical; line-height: 1.55; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; align-items: end; }
+.empty { border: 1.5px dashed var(--line); border-radius: var(--r); padding: 22px; color: var(--muted); text-align: left; display: flex; flex-direction: column; gap: 6px; }
+.empty strong { color: var(--ink); font-family: var(--font-display); font-weight: 600; }
+.notice { border-radius: 12px; padding: 12px 14px; font-size: 14px; background: var(--warn-soft); color: var(--ink); border: 1px solid transparent; display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; justify-content: space-between; }
+.notice.info { background: var(--accent-soft); }
+.notice.bad { background: var(--bad-soft); }
+
+/* KPI strip */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.kpi .label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.kpi .value { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.kpi .value.accent { color: var(--accent); }
+.kpi .hint { font-size: 12.5px; color: var(--muted); }
+
+/* Rows / lists */
+.rows { display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; gap: 12px; padding: 11px 2px; border-top: 1px solid var(--line); cursor: pointer; min-width: 0; }
+.row:first-child { border-top: 0; }
+.row:hover .row-title { color: var(--accent); }
+.row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.row-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-meta { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fit { font-family: var(--font-display); font-weight: 700; font-size: 15px; min-width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-variant-numeric: tabular-nums; }
+.fit.low { background: var(--surface-2); color: var(--muted); }
+
+/* Find leads */
+.source-toggle { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.source-toggle button { border: 0; background: none; padding: 7px 13px; border-radius: 9px; font-weight: 600; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+.source-toggle button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.results { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.result { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.result-head { display: flex; gap: 12px; align-items: flex-start; }
+.result-head .name { font-family: var(--font-display); font-weight: 600; font-size: 16px; line-height: 1.3; overflow-wrap: anywhere; }
+.result .quote { font-size: 13.5px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 10px; overflow-wrap: anywhere; }
+.result-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: auto; flex-wrap: wrap; }
+.quickrefs { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+
+/* Pipeline board */
+.board-wrap { overflow-x: auto; padding-bottom: 6px; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 12px; min-width: 100%; }
+.col { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 160px; }
+.col.drop { border-color: var(--accent); background: var(--accent-soft); }
+.col-head { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 4px 4px; gap: 8px; }
+.col-head h3 { font-size: 13.5px; font-weight: 600; }
+.col-head .meta { font-size: 12px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; box-shadow: 0 1px 1px rgba(16,24,40,.04); }
+.card:hover { border-color: var(--accent); }
+.card .t { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.card .m { font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.col-empty { font-size: 12.5px; color: var(--muted); padding: 8px 4px; }
+
+/* Drawer */
+.scrim { position: fixed; inset: 0; background: rgba(8, 12, 20, .38); z-index: 20; }
+.drawer { position: fixed; z-index: 21; top: 0; right: 0; bottom: 0; width: min(600px, 100%); background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.drawer-head { padding: 16px 20px 12px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.drawer-head .top-line { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.drawer-head h2 { font-size: 21px; font-weight: 700; overflow-wrap: anywhere; }
+.drawer-body { overflow-y: auto; padding: 16px 20px 32px; display: flex; flex-direction: column; gap: 22px; }
+.section { display: flex; flex-direction: column; gap: 10px; }
+.section > h3 { font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-family: var(--font-display); }
+.stage-steps { display: flex; gap: 4px; flex-wrap: wrap; }
+.stage-steps button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.stage-steps button.done { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.stage-steps button.current { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.stage-steps button.lost.current { background: var(--bad); border-color: var(--bad); color: #fff; }
+.stage-steps button.won.current { background: var(--good); border-color: var(--good); color: #fff; }
+.contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; }
+.log { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.log div { display: flex; gap: 10px; }
+.log time { color: var(--muted); min-width: 84px; font-variant-numeric: tabular-nums; }
+.composer { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--surface-2); }
+.composer textarea { background: var(--surface); min-height: 220px; }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.status { font-size: 13px; color: var(--muted); }
+
+/* Templates */
+.tpl-layout { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .tpl-layout { grid-template-columns: minmax(0, 1fr); } }
+.tpl-list { display: flex; flex-direction: column; gap: 4px; }
+.tpl-item { text-align: left; border: 1px solid transparent; background: none; border-radius: 10px; padding: 9px 11px; cursor: pointer; display: flex; flex-direction: column; gap: 1px; }
+.tpl-item:hover { background: var(--surface-2); }
+.tpl-item[aria-current="true"] { background: var(--accent-soft); border-color: transparent; }
+.tpl-item .n { font-weight: 600; font-size: 14px; }
+.tpl-item .k { font-size: 12px; color: var(--muted); }
+.kind-label { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 10px 11px 2px; font-family: var(--font-display); }
+.vars { display: flex; flex-wrap: wrap; gap: 6px; }
+.vars code { font-size: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; cursor: pointer; }
+
+/* Results */
+.funnel { display: flex; flex-direction: column; gap: 10px; }
+.fstep { display: grid; grid-template-columns: 120px minmax(0, 1fr) 92px; gap: 12px; align-items: center; font-size: 13.5px; }
+.fstep .lbl { font-weight: 600; }
+.fbar { height: 22px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+.fbar span { display: block; height: 100%; background: var(--accent); border-radius: 6px; min-width: 2px; }
+.fstep.won .fbar span { background: var(--good); }
+.fstep .v { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.fstep .v b { color: var(--ink); }
+@media (max-width: 480px) { .fstep { grid-template-columns: 90px minmax(0,1fr) 72px; gap: 8px; } }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 8px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td:first-child { font-weight: 600; }
+svg text { fill: var(--muted); font-family: var(--font-body); font-size: 11px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 14px; z-index: 40; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+.spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brandrow">
+      <div class="brand"><h1>Client Hunt</h1><span class="by">Habib <b>Does Ads</b></span></div>
+      <div class="conn" id="conn"></div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+  </div>
+</header>
+
+<main id="view"></main>
+<div id="drawer-root"></div>
+<div id="toast-root"></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- constants ---------- */
+const META = "Meta ads connector";
+const INDEED = "Indeed";
+const STAGES = [
+  { id: "new", label: "New lead", p: 0.02 },
+  { id: "researched", label: "Researched", p: 0.05 },
+  { id: "contacted", label: "Contacted", p: 0.1 },
+  { id: "replied", label: "Replied", p: 0.25 },
+  { id: "call", label: "Call booked", p: 0.4 },
+  { id: "proposal", label: "Proposal sent", p: 0.6 },
+  { id: "won", label: "Won", p: 1 },
+  { id: "lost", label: "Lost", p: 0 },
+];
+const FUNNEL = ["new", "researched", "contacted", "replied", "call", "proposal", "won"];
+const OPEN = new Set(["new", "researched", "contacted", "replied", "call", "proposal"]);
+const KINDS = [
+  { id: "dm", label: "Cold DMs" },
+  { id: "email", label: "Cold emails" },
+  { id: "followup", label: "Follow-ups" },
+  { id: "proposal", label: "Proposals" },
+];
+const SOURCE_LABEL = { ad_library: "Meta Ad Library", hiring: "Hiring signal", manual: "Added by hand" };
+const LOST_REASONS = ["No reply", "Not a fit", "Too expensive", "Went with someone else", "Bad timing", "Has in-house team"];
+const VARS = ["brand", "first_name", "headline", "ad_count", "observation", "job_title", "my_name", "offer", "price", "proof", "booking_link"];
+const TABS = [
+  { id: "today", label: "Today" },
+  { id: "find", label: "Find leads" },
+  { id: "pipeline", label: "Pipeline" },
+  { id: "templates", label: "Templates" },
+  { id: "results", label: "Results" },
+];
+
+/* ---------- state ---------- */
+const S = {
+  tab: "today",
+  db: null, mcp: null, sample: null,
+  dbState: "loading", // loading | ready | none
+  leads: new Map(),
+  templates: [],
+  profile: {},
+  openLead: null,
+  find: { source: "ads", q: "", country: "CA", limit: 25, busy: false, error: null, results: null, total: null,
+          jq: "paid social manager", jloc: "Toronto, ON", jcountry: "CA", jobs: null },
+  tplSel: null,
+  composer: { tplId: "", text: "", subject: "", busy: false, note: "" },
+};
+let convId = Array.from({ length: 20 }, () => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 62)]).join("");
+
+try { const t = localStorage.getItem("ch-tab"); if (t && TABS.some(x => x.id === t)) S.tab = t; } catch (e) {}
+if (TABS.some(x => x.id === location.hash.slice(1))) S.tab = location.hash.slice(1);
+
+/* ---------- helpers ---------- */
+const $ = (sel, el = document) => el.querySelector(sel);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const today = () => new Date().toLocaleDateString("en-CA");
+const addDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toLocaleDateString("en-CA"); };
+const fmtDate = (v) => { if (!v) return ""; const d = typeof v === "number" ? new Date(v) : new Date(v + "T12:00:00"); return d.toLocaleDateString("en-CA", { month: "short", day: "numeric" }); };
+const money = n => "$" + Math.round(Number(n) || 0).toLocaleString("en-CA");
+const pct = (a, b) => b ? Math.round((a / b) * 100) + "%" : "–";
+const stageOf = id => STAGES.find(s => s.id === id) || STAGES[0];
+const stageIdx = id => FUNNEL.indexOf(id);
+const slug = s => String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "lead";
+const leadsArr = () => [...S.leads.values()];
+const hasContact = l => !!(l.email || l.instagram || l.phone || l.contactName);
+
+function toast(msg) {
+  const r = $("#toast-root");
+  r.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { r.innerHTML = ""; }, 2400);
+}
+async function copyText(text, fallbackEl) {
+  try { await navigator.clipboard.writeText(text); toast("Copied"); }
+  catch (e) { if (fallbackEl) { fallbackEl.focus(); fallbackEl.select(); } toast("Press Ctrl+C / Cmd+C to copy"); }
+}
+
+/* one write at a time per document */
+const queues = new Map();
+function writeDoc(path, fn) {
+  const prev = queues.get(path) || Promise.resolve();
+  const next = prev.catch(() => {}).then(fn);
+  queues.set(path, next);
+  return next.catch(e => {
+    if (e && e.code === "quota_exceeded") toast("The lead store is full. Delete old lost leads to make room.");
+    else if (e && e.code === "invalid_argument") toast("You can view this board but not change it.");
+    else toast("Couldn't save. Check your connection and try again.");
+    throw e;
+  });
+}
+function saveLead(id, patch) {
+  if (!S.db) { toast("Open this page in claude.ai to save changes."); return Promise.resolve(); }
+  const cur = S.leads.get(id);
+  if (cur) S.leads.set(id, { ...cur, ...patch }); // optimistic
+  return writeDoc("leads/" + id, () => S.db.doc("leads/" + id).update({ ...patch, updatedAt: Date.now() }));
+}
+function createLead(id, data) {
+  if (!S.db) { toast("Open this page in claude.ai to save leads."); return Promise.resolve(false); }
+  const now = Date.now();
+  const doc = {
+    stage: "new", maxStage: 0, value: Number(S.profile.defaultValue) || 1500, signals: [], headlines: [],
+    website: "", email: "", instagram: "", contactName: "", contactRole: "", phone: "", contactSource: "",
+    notes: "", nextFollowUp: "", needsResearch: true, createdAt: now, updatedAt: now,
+    log: [{ t: now, kind: "created", text: "Added from " + (SOURCE_LABEL[data.source] || "manual") }],
+    ...data,
+  };
+  S.leads.set(id, { _id: id, ...doc });
+  return writeDoc("leads/" + id, () => S.db.doc("leads/" + id).set(doc)).then(() => true, () => false);
+}
+function logEntry(l, entry) { return [...(l.log || []), { t: Date.now(), ...entry }].slice(-40); }
+
+function setStage(id, stage, extra = {}) {
+  const l = S.leads.get(id); if (!l || l.stage === stage) return;
+  const patch = { stage, ...extra };
+  const idx = stageIdx(stage);
+  if (idx >= 0) patch.maxStage = Math.max(l.maxStage || 0, idx);
+  if (stage === "won") patch.wonAt = Date.now();
+  if (stage === "lost") patch.lostAt = Date.now();
+  if (stage === "contacted" && !l.nextFollowUp) patch.nextFollowUp = addDays(3);
+  if (stage === "proposal" && (!l.nextFollowUp || l.nextFollowUp < today())) patch.nextFollowUp = addDays(2);
+  if (stage === "won" || stage === "lost") patch.nextFollowUp = "";
+  patch.log = logEntry(l, { kind: "stage", to: stage, text: "Moved to " + stageOf(stage).label });
+  return saveLead(id, patch).then(() => { if (S.openLead !== id) toast(l.brand + " → " + stageOf(stage).label); });
+}
+
+/* ---------- connectors: Meta Ad Library ---------- */
+function mcpErrorCopy(e, server) {
+  const code = e && e.code;
+  switch (code) {
+    case "server_not_connected": case "server_not_found":
+      return `Add the ${server} connector in claude.ai Settings → Connectors, then search again.`;
+    case "needs_reauth": return `Your ${server} connection expired. Reconnect it in claude.ai Settings → Connectors.`;
+    case "selection_required": return `You have more than one ${server} connector. Choose one in the prompt claude.ai shows, then search again.`;
+    case "not_in_manifest": case "approval_required": case "consent_required":
+      return `This page needs your OK to use ${server}. Search again and choose Allow when asked.`;
+    case "blocked_by_policy": return `Your organization blocks ${server} for this page.`;
+    case "server_unavailable": case "rate_limited": return `${server} didn't answer in time. Wait a few seconds and search again.`;
+    case "tool_error": return `${server} said: ${String(e.message || "the search failed").slice(0, 240)}`;
+    case "not_granted": case "capability_disabled": case "capability_removed":
+      return `Connector searches only work when this page is open in claude.ai.`;
+    default: return `The search didn't go through (${code || "unknown error"}). Try again in a moment.`;
+  }
+}
+
+function analyzePage(ads, country) {
+  const brand = (ads[0].page_name || "Unnamed page").trim();
+  const homeCur = { CA: "CAD", US: "USD", GB: "GBP", AU: "AUD", NZ: "NZD", IE: "EUR" }[country] || "";
+  const curs = [...new Set(ads.map(a => a.currency).filter(Boolean))];
+  const titles = [];
+  ads.forEach(a => String(a.ad_creative_link_title || "").split(" | ").forEach(p => {
+    const t = p.trim(); if (t && t.toLowerCase() !== brand.toLowerCase() && !titles.includes(t)) titles.push(t);
+  }));
+  const rawTitles = ads.map(a => (a.ad_creative_link_title || "").trim()).filter(Boolean);
+  const uniqueRaw = new Set(rawTitles).size;
+  const newest = Math.max(...ads.map(a => a.ad_delivery_start_time || a.ad_creation_time || 0));
+  const signals = [];
+  let fit = 50;
+  if (homeCur && curs.includes(homeCur)) { fit += 15; signals.push({ t: `Pays in ${homeCur}`, k: "good" }); }
+  else if (curs.length && !curs.some(c => c === "USD" || c === homeCur)) { fit -= 25; signals.push({ t: `Pays in ${curs.join("/")}: maybe a dropshipper`, k: "bad" }); }
+  if (ads.length <= 2) { fit += 5; signals.push({ t: `Only ${ads.length} ad${ads.length > 1 ? "s" : ""} live in this search`, k: "warn" }); }
+  else { fit += 10; signals.push({ t: `${ads.length} ads live`, k: "good" }); }
+  if (rawTitles.length >= 2 && uniqueRaw < rawTitles.length) { fit += 10; signals.push({ t: "Same message on several ads", k: "warn" }); }
+  if (titles.some(t => /%\s*off|sale|ends|last day|deal|save/i.test(t))) { fit += 5; signals.push({ t: "Leans on discounts", k: "warn" }); }
+  if (newest && Date.now() / 1000 - newest < 4 * 86400) signals.push({ t: "Launched ads this week", k: "accent" });
+  return {
+    pageId: String(ads[0].page_id), brand, adCount: ads.length, currency: curs.join("/"), newest,
+    headlines: titles.slice(0, 4).map(t => t.length > 140 ? t.slice(0, 137) + "…" : t),
+    snapshotUrl: ads[0].ad_snapshot_url || "", signals, fit: Math.max(0, Math.min(100, fit)),
+  };
+}
+
+async function searchAds() {
+  const F = S.find;
+  if (!S.mcp) { F.error = "Connector searches only work when this page is open in claude.ai."; render(); return; }
+  if (!F.q.trim()) { F.error = "Type a few words the brands you want would use in their ads, like \"free shipping\" or \"handmade\"."; render(); return; }
+  F.busy = true; F.error = null; render();
+  try {
+    const input = { search_terms: F.q.trim(), countries: [F.country], ad_active_status: "ACTIVE", limit: Number(F.limit) || 25, advertiser_job: "other", client_conversation_id: convId };
+    const res = await S.mcp.callTool(META, "ads_library_search", input);
+    let p = res.payload;
+    if (typeof p === "string") { try { p = JSON.parse(p); } catch (e) {} }
+    if (p && typeof p.client_conversation_id === "string" && p.client_conversation_id.length === 20) convId = p.client_conversation_id;
+    let r = p && p.results !== undefined ? p.results : p;
+    if (typeof r === "string") { try { r = JSON.parse(r); } catch (e) { r = null; } }
+    const ads = (r && Array.isArray(r.ads)) ? r.ads : [];
+    const byPage = new Map();
+    ads.forEach(a => { const k = String(a.page_id || a.page_name); if (!byPage.has(k)) byPage.set(k, []); byPage.get(k).push(a); });
+    F.results = [...byPage.values()].map(list => analyzePage(list, F.country)).sort((a, b) => b.fit - a.fit);
+    F.total = r && r.estimated_total_count;
+  } catch (e) {
+    F.error = mcpErrorCopy(e, "Meta Ads");
+  } finally { F.busy = false; render(); }
+}
+
+async function searchJobs() {
+  const F = S.find;
+  if (!S.mcp) { F.error = "Connector searches only work when this page is open in claude.ai."; render(); return; }
+  F.busy = true; F.error = null; render();
+  try {
+    const res = await S.mcp.callTool(INDEED, "search_jobs", { search: F.jq.trim() || "paid social", location: F.jloc.trim() || "remote", country_code: F.jcountry });
+    let p = res.payload;
+    const text = typeof p === "string" ? p : (p && typeof p.result === "string" ? p.result : (res.content || []).map(c => c.text || "").join("\n"));
+    const get = (b, k) => { const m = b.match(new RegExp("\\*\\*" + k + ":\\*\\*\\s*(.+)")); return m ? m[1].trim() : ""; };
+    F.jobs = text.split(/\n\s*\n/).map(b => ({
+      title: get(b, "Job Title"), company: get(b, "Company"), location: get(b, "Location"),
+      posted: get(b, "Posted on"), type: get(b, "Job Type"), url: get(b, "View Job URL"),
+    })).filter(j => j.title && j.company);
+  } catch (e) {
+    F.error = mcpErrorCopy(e, "Indeed");
+  } finally { F.busy = false; render(); }
+}
+
+function addFromAds(r) {
+  const id = "fb-" + r.pageId;
+  if (S.leads.has(id)) { openLead(id); return; }
+  createLead(id, {
+    brand: r.brand, source: "ad_library", pageId: r.pageId, query: S.find.q.trim(), country: S.find.country,
+    adCount: r.adCount, currency: r.currency, headlines: r.headlines, snapshotUrl: r.snapshotUrl,
+    signals: r.signals.map(s => s.t), signalKinds: r.signals.map(s => s.k), fit: r.fit,
+  }).then(ok => { if (ok) toast(r.brand + " added to pipeline"); render(); });
+  render();
+}
+function addFromJob(j) {
+  const id = "job-" + slug(j.company);
+  if (S.leads.has(id)) { openLead(id); return; }
+  createLead(id, {
+    brand: j.company, source: "hiring", jobTitle: j.title, jobUrl: j.url, location: j.location, country: S.find.jcountry,
+    signals: [`Hiring: ${j.title}`, j.posted ? `Posted ${j.posted}` : ""].filter(Boolean), signalKinds: ["good", ""], fit: 60,
+  }).then(ok => { if (ok) toast(j.company + " added to pipeline"); render(); });
+  render();
+}
+
+/* ---------- templates ---------- */
+function varsFor(l) {
+  const P = S.profile;
+  const opp = (l.signals || []).find((s, i) => (l.signalKinds || [])[i] === "warn") || (l.signals || [])[0] || "";
+  return {
+    brand: l.brand || "",
+    first_name: (l.contactName || "").trim().split(/\s+/)[0] || "there",
+    headline: (l.headlines || [])[0] || "",
+    ad_count: String(l.adCount || ""),
+    observation: opp,
+    job_title: l.jobTitle || "",
+    my_name: P.myName || "Habib",
+    offer: P.offer || "",
+    price: l.value ? money(l.value) : (P.price || ""),
+    proof: P.proof || "",
+    booking_link: P.bookingLink || "",
+  };
+}
+const fill = (txt, v) => String(txt || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => (v[k] !== undefined && v[k] !== "") ? v[k] : m);
+
+/* ---------- rendering ---------- */
+function renderTabs() {
+  const counts = { pipeline: leadsArr().filter(l => OPEN.has(l.stage)).length, today: dueLeads().length };
+  $("#tabs").innerHTML = TABS.map(t => `<button class="tab" role="tab" data-tab="${t.id}" aria-selected="${S.tab === t.id}">${t.label}${counts[t.id] ? `<span class="count num">${counts[t.id]}</span>` : ""}</button>`).join("");
+  const c = [];
+  if (S.dbState === "ready") c.push(`<span class="chip good"><span class="dot"></span>Saving</span>`);
+  else if (S.dbState === "none") c.push(`<span class="chip warn"><span class="dot"></span>Not saving</span>`);
+  if (S.mcp) c.push(`<span class="chip accent">Meta Ad Library</span><span class="chip accent">Indeed</span>`);
+  if (S.sample) c.push(`<span class="chip accent">Claude writer</span>`);
+  $("#conn").innerHTML = c.join("");
+}
+
+function dueLeads() {
+  const t = today();
+  return leadsArr().filter(l => OPEN.has(l.stage) && l.nextFollowUp && l.nextFollowUp <= t)
+    .sort((a, b) => a.nextFollowUp.localeCompare(b.nextFollowUp));
+}
+
+function stageChip(l) {
+  const k = l.stage === "won" ? "good" : l.stage === "lost" ? "bad" : l.stage === "new" ? "" : "accent";
+  return `<span class="chip ${k}">${esc(stageOf(l.stage).label)}</span>`;
+}
+function leadRow(l, meta) {
+  return `<div class="row" data-open="${esc(l._id)}" tabindex="0" role="button">
+    <div class="fit ${(l.fit || 0) < 50 ? "low" : ""} num" title="Fit score">${l.fit ?? "–"}</div>
+    <div class="row-main"><div class="row-title">${esc(l.brand)}</div><div class="row-meta">${meta}</div></div>
+    ${stageChip(l)}
+  </div>`;
+}
+
+function dbNotice() {
+  if (S.dbState === "none") return `<div class="notice"><span>This copy of the page can't save. Open Client Hunt from claude.ai to keep your leads and pipeline.</span></div>`;
+  return "";
+}
+
+function viewToday() {
+  const L = leadsArr();
+  const open = L.filter(l => OPEN.has(l.stage));
+  const due = dueLeads();
+  const t = today();
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  const wonMonth = L.filter(l => l.stage === "won" && (l.wonAt || 0) >= monthStart.getTime());
+  const proposals = L.filter(l => l.stage === "proposal");
+  const noContact = open.filter(l => !hasContact(l) || l.needsResearch).sort((a, b) => (b.fit || 0) - (a.fit || 0));
+  const fresh = L.filter(l => l.stage === "new").sort((a, b) => (b.fit || 0) - (a.fit || 0));
+
+  if (S.dbState === "loading") return `<div class="empty"><strong>Loading your pipeline…</strong></div>`;
+
+  return `${dbNotice()}
+  <div class="kpis">
+    <div class="kpi"><span class="label">Open leads</span><span class="value num">${open.length}</span><span class="hint">${fresh.length} not contacted yet</span></div>
+    <div class="kpi"><span class="label">Follow-ups due</span><span class="value num ${due.length ? "accent" : ""}">${due.length}</span><span class="hint">${due.filter(l => l.nextFollowUp < t).length} overdue</span></div>
+    <div class="kpi"><span class="label">Proposals out</span><span class="value num">${proposals.length}</span><span class="hint">${money(proposals.reduce((s, l) => s + (Number(l.value) || 0), 0))}/mo on the table</span></div>
+    <div class="kpi"><span class="label">Won this month</span><span class="value num">${money(wonMonth.reduce((s, l) => s + (Number(l.value) || 0), 0))}</span><span class="hint">${wonMonth.length} new client${wonMonth.length === 1 ? "" : "s"} · monthly</span></div>
+  </div>
+  <div class="grid2">
+    <section class="panel">
+      <div class="panel-head"><h2>Follow up today</h2><span class="sub">${esc(new Date().toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" }))}</span></div>
+      ${due.length ? `<div class="rows">${due.map(l => leadRow(l, `${l.nextFollowUp < t ? `<b style="color:var(--bad)">Overdue since ${fmtDate(l.nextFollowUp)}</b>` : "Due today"} · ${esc(stageOf(l.stage).label)}`)).join("")}</div>`
+        : `<div class="empty"><strong>Nothing due.</strong>When you mark someone as contacted, a follow-up is set 3 days out and shows up here.</div>`}
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Best new leads</h2><button class="btn small" data-tab="find">Find more</button></div>
+      ${fresh.length ? `<div class="rows">${fresh.slice(0, 6).map(l => leadRow(l, esc((l.signals || []).slice(0, 2).join(" · ") || SOURCE_LABEL[l.source] || ""))).join("")}</div>`
+        : `<div class="empty"><strong>No new leads yet.</strong>Go to Find leads, search the Meta Ad Library for brands in your niche and add the good ones.</div>`}
+    </section>
+  </div>
+  <section class="panel">
+    <div class="panel-head"><h2>Missing contact details</h2><span class="sub">${noContact.length} lead${noContact.length === 1 ? "" : "s"}</span></div>
+    <div class="notice info"><span>To have me look these up, ask in chat: <b>“Find contacts for my flagged Client Hunt leads.”</b> I search the web for each brand's website, email, Instagram and founder and fill them in here, with where I found each one.</span></div>
+    ${noContact.length ? `<div class="rows">${noContact.slice(0, 8).map(l => leadRow(l, l.needsResearch ? "Flagged for research" : "No email, Instagram or phone yet")).join("")}</div>` : `<div class="empty"><strong>Every open lead has contact details.</strong></div>`}
+  </section>`;
+}
+
+function viewFind() {
+  const F = S.find;
+  const ads = F.source === "ads";
+  const countries = [["CA", "Canada"], ["US", "United States"], ["GB", "United Kingdom"], ["AU", "Australia"]];
+  let body = "";
+  if (F.error) body += `<div class="notice bad"><span>${esc(F.error)}</span></div>`;
+  if (ads) {
+    if (F.results === null && !F.busy) {
+      body += `<div class="empty"><strong>Search for brands that are advertising right now.</strong>Use words they'd put in an ad: “free shipping across Canada”, “handmade in Toronto”, “shop the drop”, “book your free estimate”. Each result is a brand with live ads, a fit score and the gaps you could pitch.</div>`;
+    } else if (F.results && !F.results.length) {
+      body += `<div class="empty"><strong>No active ads matched.</strong>Try broader words or another country.</div>`;
+    } else if (F.results) {
+      body += `<div class="sub">${F.results.length} brands from ${F.results.reduce((s, r) => s + r.adCount, 0)} ads${F.total ? ` · about ${Number(F.total).toLocaleString("en-CA")} ads match in total` : ""}. Sorted by fit.</div>
+      <div class="results">${F.results.map((r, i) => {
+        const have = S.leads.has("fb-" + r.pageId);
+        return `<article class="result">
+          <div class="result-head"><div class="fit ${r.fit < 50 ? "low" : ""} num">${r.fit}</div><div style="min-width:0"><div class="name">${esc(r.brand)}</div><div class="sub">${r.adCount} ad${r.adCount > 1 ? "s" : ""} · ${esc(r.currency || "?")}${r.newest ? " · newest " + fmtDate(r.newest * 1000) : ""}</div></div></div>
+          ${r.headlines[0] ? `<div class="quote">“${esc(r.headlines[0])}”</div>` : ""}
+          <div class="chips">${r.signals.map(s => `<span class="chip ${s.k}">${esc(s.t)}</span>`).join("")}</div>
+          <div class="result-foot">
+            <div class="quickrefs"><a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=${F.country}&view_all_page_id=${encodeURIComponent(r.pageId)}" target="_blank" rel="noopener">All their ads</a><a href="https://www.facebook.com/${encodeURIComponent(r.pageId)}" target="_blank" rel="noopener">Page</a></div>
+            <button class="btn small ${have ? "" : "primary"}" data-add-ad="${i}">${have ? "Open lead" : "Add to pipeline"}</button>
+          </div>
+        </article>`;
+      }).join("")}</div>`;
+    }
+  } else {
+    if (F.jobs === null && !F.busy) {
+      body += `<div class="empty"><strong>Find companies hiring for the work you do.</strong>A company posting for a paid social or performance marketing role already has the budget and the need. You pitch a freelance setup that starts this week, for less than a salary.</div>`;
+    } else if (F.jobs && !F.jobs.length) {
+      body += `<div class="empty"><strong>No job posts matched.</strong>Try “performance marketing”, “Meta ads” or “digital marketing manager”.</div>`;
+    } else if (F.jobs) {
+      body += `<div class="results">${F.jobs.map((j, i) => {
+        const have = S.leads.has("job-" + slug(j.company));
+        return `<article class="result">
+          <div class="result-head"><div style="min-width:0"><div class="name">${esc(j.company)}</div><div class="sub">${esc(j.location)}${j.posted ? " · posted " + esc(j.posted) : ""}</div></div></div>
+          <div class="quote">Hiring: ${esc(j.title)}${j.type && j.type !== "N/A" ? " (" + esc(j.type) + ")" : ""}</div>
+          <div class="result-foot">
+            <div class="quickrefs">${j.url ? `<a href="${esc(j.url)}" target="_blank" rel="noopener">Job post</a>` : ""}</div>
+            <button class="btn small ${have ? "" : "primary"}" data-add-job="${i}">${have ? "Open lead" : "Add to pipeline"}</button>
+          </div>
+        </article>`;
+      }).join("")}</div>`;
+    }
+  }
+
+  return `${dbNotice()}
+  <section class="panel">
+    <div class="panel-head"><div style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow">Step 1</span><h2>Find brands to pitch</h2></div>
+      <div class="source-toggle" role="group" aria-label="Lead source">
+        <button data-source="ads" aria-pressed="${ads}">Brands running Meta ads</button>
+        <button data-source="jobs" aria-pressed="${!ads}">Companies hiring</button>
+      </div>
+    </div>
+    ${ads ? `<form id="adform" class="form-row">
+      <label class="field" style="grid-column: span 2">Words in their ads<input id="f-q" type="text" value="${esc(F.q)}" placeholder="free shipping across Canada"></label>
+      <label class="field">Country<select id="f-country">${countries.map(([c, n]) => `<option value="${c}" ${F.country === c ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+      <label class="field">Ads to scan<select id="f-limit">${[25, 50].map(n => `<option ${Number(F.limit) === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+      <button class="btn primary" type="submit" ${F.busy ? "disabled" : ""}>${F.busy ? `<span class="spin"></span> Searching` : "Search Ad Library"}</button>
+    </form>` : `<form id="jobform" class="form-row">
+      <label class="field" style="grid-column: span 2">Role they're hiring for<input id="f-jq" type="text" value="${esc(F.jq)}"></label>
+      <label class="field">City or “remote”<input id="f-jloc" type="text" value="${esc(F.jloc)}"></label>
+      <label class="field">Country<select id="f-jcountry">${countries.map(([c, n]) => `<option value="${c}" ${F.jcountry === c ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+      <button class="btn primary" type="submit" ${F.busy ? "disabled" : ""}>${F.busy ? `<span class="spin"></span> Searching` : "Search Indeed"}</button>
+    </form>`}
+    ${body}
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Add a lead by hand</h2><span class="sub">A referral, a brand you saw on Instagram, someone you met.</span></div>
+    <form id="manualform" class="form-row">
+      <label class="field">Brand<input id="m-brand" type="text" placeholder="Brand name" required></label>
+      <label class="field">Website<input id="m-site" type="text" placeholder="brand.com"></label>
+      <label class="field">Instagram<input id="m-ig" type="text" placeholder="@handle"></label>
+      <button class="btn" type="submit">Add lead</button>
+    </form>
+  </section>`;
+}
+
+function viewPipeline() {
+  if (S.dbState === "loading") return `<div class="empty"><strong>Loading your pipeline…</strong></div>`;
+  const L = leadsArr();
+  const t = today();
+  const cols = STAGES.map(s => {
+    const items = L.filter(l => l.stage === s.id).sort((a, b) => (a.nextFollowUp || "9").localeCompare(b.nextFollowUp || "9") || (b.fit || 0) - (a.fit || 0));
+    const total = items.reduce((sum, l) => sum + (Number(l.value) || 0), 0);
+    return `<div class="col" data-col="${s.id}">
+      <div class="col-head"><h3>${s.label} <span class="meta num">${items.length}</span></h3><span class="meta num">${total ? money(total) : ""}</span></div>
+      ${items.length ? items.map(l => `<div class="card" draggable="true" data-open="${esc(l._id)}" data-drag="${esc(l._id)}" tabindex="0" role="button">
+        <div class="t">${esc(l.brand)}</div>
+        <div class="m"><span class="num">${money(l.value)}/mo</span>${l.nextFollowUp ? `<span style="color:${l.nextFollowUp < t ? "var(--bad)" : l.nextFollowUp === t ? "var(--accent)" : "inherit"}">↻ ${fmtDate(l.nextFollowUp)}</span>` : ""}</div>
+        ${!hasContact(l) && OPEN.has(l.stage) ? `<div><span class="chip warn">No contact yet</span></div>` : ""}
+      </div>`).join("") : `<div class="col-empty">${s.id === "new" ? "Leads you add land here." : "Drag a card here or change its stage in the lead."}</div>`}
+    </div>`;
+  }).join("");
+  return `${dbNotice()}<div class="board-wrap"><div class="board">${cols}</div></div>`;
+}
+
+function viewTemplates() {
+  const T = S.templates;
+  if (!S.tplSel && T.length) S.tplSel = T[0]._id;
+  const cur = T.find(t => t._id === S.tplSel);
+  const P = S.profile;
+  return `${dbNotice()}
+  <div class="tpl-layout">
+    <section class="panel" style="padding:10px">
+      <div class="tpl-list">
+        ${KINDS.map(k => {
+          const items = T.filter(t => t.kind === k.id);
+          return `<div class="kind-label">${k.label}</div>${items.map(t => `<button class="tpl-item" data-tpl="${esc(t._id)}" aria-current="${t._id === S.tplSel}"><span class="n">${esc(t.name)}</span><span class="k">${esc(t.use || "")}</span></button>`).join("") || `<div class="col-empty" style="padding:4px 11px">None yet</div>`}`;
+        }).join("")}
+        <button class="btn small" id="tpl-new" style="margin:10px 6px 4px">New template</button>
+      </div>
+    </section>
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+      ${cur ? `<section class="panel">
+        <div class="form-row">
+          <label class="field" style="grid-column: span 2">Name<input id="t-name" type="text" value="${esc(cur.name)}"></label>
+          <label class="field">Type<select id="t-kind">${KINDS.map(k => `<option value="${k.id}" ${cur.kind === k.id ? "selected" : ""}>${k.label.replace(/s$/, "")}</option>`).join("")}</select></label>
+        </div>
+        <label class="field">When to use it<input id="t-use" type="text" value="${esc(cur.use || "")}"></label>
+        ${cur.kind !== "dm" ? `<label class="field">Subject line<input id="t-subject" type="text" value="${esc(cur.subject || "")}"></label>` : ""}
+        <label class="field">Message<textarea id="t-body" rows="16">${esc(cur.body || "")}</textarea></label>
+        <div class="vars" aria-label="Fill-in fields">${VARS.map(v => `<code data-var="${v}" title="Insert">{{${v}}}</code>`).join("")}</div>
+        <div class="btnrow"><span class="status">Edits save when you click away. Fill-in fields are swapped for the lead's details when you write to them.</span><span style="flex:1"></span><button class="btn small danger" id="t-del">Delete</button></div>
+      </section>` : `<div class="empty"><strong>No templates yet.</strong>Create one, or ask me in chat to add a set.</div>`}
+      <section class="panel">
+        <div class="panel-head"><h2>Your details</h2><span class="sub">Used in every template</span></div>
+        <div class="form-row">
+          <label class="field">Your name<input id="p-myName" type="text" value="${esc(P.myName || "")}"></label>
+          <label class="field">Starting price<input id="p-price" type="text" value="${esc(P.price || "")}" placeholder="$1,500/mo"></label>
+          <label class="field">Default deal value (monthly)<input id="p-defaultValue" type="number" min="0" step="100" value="${esc(P.defaultValue || "")}"></label>
+        </div>
+        <label class="field">Your offer in one line<input id="p-offer" type="text" value="${esc(P.offer || "")}"></label>
+        <label class="field">Proof (your best result)<input id="p-proof" type="text" value="${esc(P.proof || "")}"></label>
+        <label class="field">Booking link<input id="p-bookingLink" type="text" value="${esc(P.bookingLink || "")}" placeholder="calendly.com/you/intro"></label>
+      </section>
+    </div>
+  </div>`;
+}
+
+function viewResults() {
+  if (S.dbState === "loading") return `<div class="empty"><strong>Loading…</strong></div>`;
+  const L = leadsArr();
+  const reached = id => L.filter(l => l.stage !== "lost" ? stageIdx(l.stage) >= stageIdx(id) : (l.maxStage || 0) >= stageIdx(id)).length;
+  const counts = FUNNEL.map(id => ({ id, n: id === "won" ? L.filter(l => l.stage === "won").length : reached(id) }));
+  const max = Math.max(1, counts[0].n);
+  const won = L.filter(l => l.stage === "won");
+  const lost = L.filter(l => l.stage === "lost");
+  const open = L.filter(l => OPEN.has(l.stage));
+  const mrr = won.reduce((s, l) => s + (Number(l.value) || 0), 0);
+  const weighted = open.reduce((s, l) => s + (Number(l.value) || 0) * stageOf(l.stage).p, 0);
+  const c = id => counts.find(x => x.id === id).n;
+  const closeDays = won.filter(l => l.wonAt && l.createdAt).map(l => (l.wonAt - l.createdAt) / 86400000);
+  const avgClose = closeDays.length ? Math.round(closeDays.reduce((a, b) => a + b, 0) / closeDays.length) : null;
+
+  // weekly outreach: stage moves into "contacted" over the last 8 weeks
+  const weeks = [];
+  const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // Monday
+  for (let i = 7; i >= 0; i--) { const s = new Date(start); s.setDate(s.getDate() - i * 7); weeks.push({ s: s.getTime(), e: s.getTime() + 7 * 86400000, contacted: 0, won: 0 }); }
+  L.forEach(l => (l.log || []).forEach(e => {
+    if (e.kind !== "stage") return;
+    const w = weeks.find(w => e.t >= w.s && e.t < w.e); if (!w) return;
+    if (e.to === "contacted") w.contacted++;
+    if (e.to === "won") w.won++;
+  }));
+  const wmax = Math.max(4, ...weeks.map(w => w.contacted));
+  const W = 560, H = 190, padL = 28, padB = 26, padT = 12, bw = (W - padL - 8) / weeks.length;
+  const y = v => padT + (H - padT - padB) * (1 - v / wmax);
+  const ticks = [0, Math.round(wmax / 2), wmax];
+  const chart = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Brands contacted per week, last 8 weeks">
+    ${ticks.map(t => `<line x1="${padL}" x2="${W - 4}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/><text x="${padL - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`).join("")}
+    ${weeks.map((w, i) => { const x = padL + i * bw + bw * 0.18, h = y(0) - y(w.contacted); const last = i === weeks.length - 1;
+      return `<rect x="${x}" y="${y(w.contacted)}" width="${bw * 0.64}" height="${Math.max(h, 0)}" rx="4" fill="var(--accent)" opacity="${last ? 1 : 0.55}"/>
+      ${w.contacted ? `<text x="${x + bw * 0.32}" y="${y(w.contacted) - 4}" text-anchor="middle" style="fill:var(--ink);font-weight:600">${w.contacted}</text>` : ""}
+      <text x="${x + bw * 0.32}" y="${H - 8}" text-anchor="middle">${new Date(w.s).toLocaleDateString("en-CA", { month: "short", day: "numeric" })}</text>`; }).join("")}
+  </svg>`;
+
+  const srcRows = Object.keys(SOURCE_LABEL).map(k => {
+    const s = L.filter(l => l.source === k);
+    if (!s.length) return "";
+    const cont = s.filter(l => (l.maxStage || 0) >= 2).length;
+    const rep = s.filter(l => (l.maxStage || 0) >= 3).length;
+    const w = s.filter(l => l.stage === "won");
+    return `<tr><td>${SOURCE_LABEL[k]}</td><td>${s.length}</td><td>${cont}</td><td>${pct(rep, cont)}</td><td>${w.length}</td><td>${money(w.reduce((a, l) => a + (Number(l.value) || 0), 0))}</td></tr>`;
+  }).join("");
+  const lostRows = LOST_REASONS.map(r => [r, lost.filter(l => l.lostReason === r).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
+
+  return `${dbNotice()}
+  <div class="kpis">
+    <div class="kpi"><span class="label">Monthly revenue won</span><span class="value num accent">${money(mrr)}</span><span class="hint">${won.length} client${won.length === 1 ? "" : "s"}${avgClose !== null ? ` · ${avgClose} days to close on average` : ""}</span></div>
+    <div class="kpi"><span class="label">Reply rate</span><span class="value num">${pct(c("replied"), c("contacted"))}</span><span class="hint">${c("replied")} of ${c("contacted")} contacted</span></div>
+    <div class="kpi"><span class="label">Proposal win rate</span><span class="value num">${pct(c("won"), c("proposal"))}</span><span class="hint">${c("won")} of ${c("proposal")} proposals</span></div>
+    <div class="kpi"><span class="label">Pipeline, weighted</span><span class="value num">${money(weighted)}</span><span class="hint">${money(open.reduce((s, l) => s + (Number(l.value) || 0), 0))}/mo open, by stage odds</span></div>
+  </div>
+  <div class="grid2">
+    <section class="panel">
+      <div class="panel-head"><h2>Funnel</h2><span class="sub">How far each lead has got</span></div>
+      <div class="funnel">${counts.map((x, i) => `<div class="fstep ${x.id}"><span class="lbl">${stageOf(x.id).label}</span><div class="fbar"><span style="width:${(x.n / max) * 100}%"></span></div><span class="v"><b>${x.n}</b>${i ? ` · ${pct(x.n, counts[i - 1].n)}` : ""}</span></div>`).join("")}</div>
+      <div class="sub">Percentages are the share that made it from the stage above.</div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Brands contacted per week</h2><span class="sub">Last 8 weeks</span></div>
+      ${chart}
+    </section>
+  </div>
+  <div class="grid2">
+    <section class="panel">
+      <div class="panel-head"><h2>Which source works</h2></div>
+      ${srcRows ? `<div class="table-wrap"><table><thead><tr><th>Source</th><th>Leads</th><th>Contacted</th><th>Reply rate</th><th>Won</th><th>Monthly</th></tr></thead><tbody>${srcRows}</tbody></table></div>` : `<div class="empty">Add leads to compare sources.</div>`}
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Why deals were lost</h2><span class="sub">${lost.length} lost</span></div>
+      ${lostRows.length ? `<div class="funnel">${lostRows.map(([r, n]) => `<div class="fstep"><span class="lbl">${esc(r)}</span><div class="fbar"><span style="width:${(n / lostRows[0][1]) * 100}%;background:var(--muted)"></span></div><span class="v"><b>${n}</b></span></div>`).join("")}</div>` : `<div class="empty">When you mark a lead as lost, pick a reason. The pattern shows up here.</div>`}
+    </section>
+  </div>`;
+}
+
+/* ---------- drawer ---------- */
+function openLead(id) { S.openLead = id; S.composer = { tplId: "", text: "", subject: "", busy: false, note: "" }; renderDrawer(); }
+function closeLead() { S.openLead = null; if (S.composer.ctl) S.composer.ctl.abort(); renderDrawer(); }
+
+function renderDrawer() {
+  const root = $("#drawer-root");
+  const l = S.openLead && S.leads.get(S.openLead);
+  if (!l) { root.innerHTML = ""; document.body.style.overflow = ""; return; }
+  document.body.style.overflow = "hidden";
+  const C = S.composer;
+  const v = varsFor(l);
+  const q = encodeURIComponent(l.brand);
+  const ig = (l.instagram || "").replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/$/, "");
+  const site = l.website ? (/^https?:\/\//.test(l.website) ? l.website : "https://" + l.website) : "";
+  const tpls = S.templates;
+  const kinds = l.signalKinds || [];
+
+  const active = document.activeElement && document.activeElement.id;
+  root.innerHTML = `<div class="scrim" data-close></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="${esc(l.brand)}">
+    <div class="drawer-head">
+      <div class="top-line">
+        <div style="min-width:0;display:flex;flex-direction:column;gap:4px">
+          <span class="eyebrow">${esc(SOURCE_LABEL[l.source] || "Lead")}${l.fit !== undefined ? " · fit " + l.fit : ""}</span>
+          <h2>${esc(l.brand)}</h2>
+        </div>
+        <button class="btn ghost" data-close aria-label="Close">Close</button>
+      </div>
+      <div class="stage-steps">${STAGES.map(s => {
+        const cls = s.id === l.stage ? "current" : (l.stage !== "lost" && stageIdx(s.id) >= 0 && stageIdx(s.id) < stageIdx(l.stage) ? "done" : "");
+        return `<button class="${cls} ${s.id}" data-stage="${s.id}">${s.label}</button>`;
+      }).join("")}</div>
+      ${l.stage === "lost" ? `<label class="field">Why it was lost<select id="d-lostReason"><option value="">Pick a reason</option>${LOST_REASONS.map(r => `<option ${l.lostReason === r ? "selected" : ""}>${r}</option>`).join("")}</select></label>` : ""}
+    </div>
+    <div class="drawer-body">
+      <div class="form-row">
+        <label class="field">Deal value (monthly, $)<input id="d-value" type="number" min="0" step="100" value="${esc(l.value ?? "")}"></label>
+        <label class="field">Next follow-up<input id="d-nextFollowUp" type="date" value="${esc(l.nextFollowUp || "")}"></label>
+      </div>
+
+      <div class="section">
+        <h3>Why they're a lead</h3>
+        ${(l.signals || []).length ? `<div class="chips">${l.signals.map((s, i) => `<span class="chip ${kinds[i] || ""}">${esc(s)}</span>`).join("")}</div>` : ""}
+        ${(l.headlines || []).length ? `<div style="display:flex;flex-direction:column;gap:6px">${l.headlines.map(h => `<div class="quote" style="font-size:13.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:10px">“${esc(h)}”</div>`).join("")}</div>` : ""}
+        <div class="quickrefs">
+          ${l.pageId ? `<a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=${esc(l.country || "CA")}&view_all_page_id=${encodeURIComponent(l.pageId)}" target="_blank" rel="noopener">Their live ads</a><a href="https://www.facebook.com/${encodeURIComponent(l.pageId)}" target="_blank" rel="noopener">Facebook page</a>` : ""}
+          ${l.jobUrl ? `<a href="${esc(l.jobUrl)}" target="_blank" rel="noopener">Job post</a>` : ""}
+          ${site ? `<a href="${esc(site)}" target="_blank" rel="noopener">Website</a>` : ""}
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Contacts</h3>
+        <div class="contact-grid">
+          <label class="field">Contact name<input id="d-contactName" type="text" value="${esc(l.contactName || "")}" placeholder="Founder or marketing lead"></label>
+          <label class="field">Role<input id="d-contactRole" type="text" value="${esc(l.contactRole || "")}"></label>
+          <label class="field">Email<input id="d-email" type="email" value="${esc(l.email || "")}"></label>
+          <label class="field">Instagram<input id="d-instagram" type="text" value="${esc(l.instagram || "")}" placeholder="@handle"></label>
+          <label class="field">Website<input id="d-website" type="text" value="${esc(l.website || "")}"></label>
+          <label class="field">Phone<input id="d-phone" type="tel" value="${esc(l.phone || "")}"></label>
+        </div>
+        ${l.contactSource ? `<div class="sub">Where these came from: ${esc(l.contactSource)}</div>` : ""}
+        <div class="quickrefs">
+          <span class="sub">Look them up:</span>
+          <a href="https://www.google.com/search?q=${q}+founder+email" target="_blank" rel="noopener">Google</a>
+          <a href="https://www.linkedin.com/search/results/people/?keywords=${q}%20founder" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="${ig ? "https://www.instagram.com/" + encodeURIComponent(ig) : "https://www.google.com/search?q=" + q + "+instagram"}" target="_blank" rel="noopener">Instagram</a>
+          ${site ? `<a href="${esc(site.replace(/\/$/, ""))}/pages/contact" target="_blank" rel="noopener">Contact page</a>` : ""}
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="d-needsResearch" ${l.needsResearch ? "checked" : ""}> Flag for Claude to find contacts</label>
+        ${(l.email || ig || l.phone) ? `<div class="btnrow">${l.email ? `<button class="btn small" data-copy="${esc(l.email)}">Copy email</button>` : ""}${ig ? `<a class="btn small" href="https://ig.me/m/${encodeURIComponent(ig)}" target="_blank" rel="noopener">Open Instagram DM</a>` : ""}${l.phone ? `<button class="btn small" data-copy="${esc(l.phone)}">Copy phone</button>` : ""}</div>` : ""}
+      </div>
+
+      <div class="section">
+        <h3>Write to them</h3>
+        <div class="composer">
+          <label class="field">Template<select id="c-tpl"><option value="">Pick a template</option>${KINDS.map(k => {
+            const items = tpls.filter(t => t.kind === k.id);
+            return items.length ? `<optgroup label="${k.label}">${items.map(t => `<option value="${esc(t._id)}" ${C.tplId === t._id ? "selected" : ""}>${esc(t.name)}</option>`).join("")}</optgroup>` : "";
+          }).join("")}</select></label>
+          ${C.tplId ? `
+            ${C.subject ? `<label class="field">Subject<input id="c-subject" type="text" value="${esc(C.subject)}"></label>` : ""}
+            <label class="field">Message<textarea id="c-text" rows="12">${esc(C.text)}</textarea></label>
+            ${/\{\{\w+\}\}/.test(C.text + C.subject) ? `<div class="sub" style="color:var(--warn)">Some {{fields}} are still empty. Fill them in above or in Your details on the Templates tab.</div>` : ""}
+            <div class="btnrow">
+              <button class="btn small" id="c-copy">Copy</button>
+              ${S.sample ? `<button class="btn small" id="c-ai" ${C.busy ? "disabled" : ""}>${C.busy ? `<span class="spin"></span> Writing` : "Make it more personal with Claude"}</button>${C.busy ? `<button class="btn small ghost" id="c-stop">Stop</button>` : ""}` : ""}
+              <span style="flex:1"></span>
+              <button class="btn small primary" id="c-sent">Mark as sent</button>
+            </div>
+            ${C.note ? `<div class="status">${esc(C.note)}</div>` : ""}
+          ` : `<div class="sub">The template fills in ${esc(l.brand)}'s details. Edit it, copy it into Instagram or email, then mark it sent to log it and move the lead along.</div>`}
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Notes</h3>
+        <textarea id="d-notes" rows="4" placeholder="What they sell, who you spoke to, what they said">${esc(l.notes || "")}</textarea>
+      </div>
+
+      <div class="section">
+        <h3>History</h3>
+        <div class="log">${[...(l.log || [])].reverse().map(e => `<div><time>${esc(new Date(e.t).toLocaleDateString("en-CA", { month: "short", day: "numeric" }))}</time><span>${esc(e.text)}</span></div>`).join("") || `<div class="sub">Nothing yet.</div>`}</div>
+      </div>
+
+      <div class="btnrow"><button class="btn small danger" id="d-delete">Delete lead</button>${S.confirmDelete === l._id ? `<span class="status">Click again to delete for good.</span>` : ""}</div>
+    </div>
+  </aside>`;
+  if (active && document.getElementById(active)) { const el = document.getElementById(active); el.focus(); }
+}
+
+function applyTemplate(tplId) {
+  const l = S.leads.get(S.openLead); const t = S.templates.find(x => x._id === tplId);
+  S.composer.tplId = tplId; S.composer.note = "";
+  if (!t || !l) { S.composer.text = ""; S.composer.subject = ""; renderDrawer(); return; }
+  const v = varsFor(l);
+  S.composer.text = fill(t.body, v);
+  S.composer.subject = t.kind === "dm" ? "" : fill(t.subject, v);
+  renderDrawer();
+}
+
+async function personalize() {
+  const l = S.leads.get(S.openLead); const C = S.composer; const t = S.templates.find(x => x._id === C.tplId);
+  if (!l || !S.sample || C.busy) return;
+  C.ctl = new AbortController(); C.busy = true; C.note = ""; renderDrawer();
+  const facts = {
+    brand: l.brand, contact: l.contactName || "unknown", role: l.contactRole || "", source: SOURCE_LABEL[l.source],
+    what_their_ads_say: l.headlines || [], live_ad_count_seen: l.adCount || null, signals: l.signals || [],
+    hiring_for: l.jobTitle || "", website: l.website || "", notes: l.notes || "",
+  };
+  const prompt = `You are helping ${S.profile.myName || "Habib"}, a freelance Meta ads specialist (Habib Does Ads), write a ${t ? t.kind : "message"} to a prospective client.
+
+Rewrite the draft below so it is specific to this brand. Rules:
+- Keep it the same length or shorter. Plain, confident, friendly. No hype, no emoji unless the draft has them.
+- Use only the facts given. Do not invent results, names, numbers or details about the brand.
+- Keep any {{field}} placeholders that you can't fill from the facts.
+- Reply with only the message text${C.subject ? ". Do not include a subject line" : ""}.
+
+About the sender: ${S.profile.offer || ""} Proof: ${S.profile.proof || ""}
+Facts about the brand (JSON): ${JSON.stringify(facts)}
+
+Draft:
+${C.text}`;
+  try {
+    const before = C.text;
+    await S.sample(prompt, {
+      signal: C.ctl.signal, cache: false,
+      onText: ({ text }) => { C.text = text; const ta = $("#c-text"); if (ta) ta.value = text; },
+    });
+    C.note = "Rewritten by Claude. Read it before you send it.";
+    if (!C.text.trim()) C.text = before;
+  } catch (e) {
+    if (e.text) C.text = e.text;
+    C.note = e.code === "cancelled" ? "Stopped." : e.code === "not_granted" || e.code === "sampling_disabled" ? "Claude isn't allowed on this page, so the template stays as is." : e.code === "rate_limited" ? "Too many requests. Try again in a minute." : e.code === "refused" ? "Claude wouldn't rewrite this one. Edit it by hand." : "Claude didn't finish. Try again.";
+    if (e.code === "not_granted" || e.code === "sampling_disabled") S.sample = null;
+  } finally { C.busy = false; renderDrawer(); }
+}
+
+function markSent() {
+  const l = S.leads.get(S.openLead); const C = S.composer; const t = S.templates.find(x => x._id === C.tplId);
+  if (!l || !t) return;
+  const log = logEntry(l, { kind: "sent", text: "Sent: " + t.name });
+  const patch = { log };
+  let to = null;
+  if (t.kind === "proposal") to = "proposal";
+  else if (stageIdx(l.stage) < stageIdx("contacted") && l.stage !== "lost") to = "contacted";
+  if (t.kind === "followup") patch.nextFollowUp = addDays(4);
+  saveLead(l._id, patch).then(() => { if (to) setStage(l._id, to); });
+  C.note = "Logged" + (to ? " and moved to " + stageOf(to).label : "") + ".";
+  toast("Logged: " + t.name);
+  renderDrawer();
+}
+
+/* ---------- master render ---------- */
+function render() {
+  renderTabs();
+  const v = $("#view");
+  const views = { today: viewToday, find: viewFind, pipeline: viewPipeline, templates: viewTemplates, results: viewResults };
+  const active = document.activeElement && document.activeElement.id;
+  const caret = active && document.activeElement.selectionStart;
+  v.innerHTML = views[S.tab]();
+  if (active && document.getElementById(active) && !document.getElementById(active).closest("#drawer-root")) {
+    const el = document.getElementById(active); el.focus();
+    try { if (caret !== null && caret !== undefined) el.setSelectionRange(caret, caret); } catch (e) {}
+  }
+  renderDrawer();
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const tab = e.target.closest("[data-tab]");
+  if (tab) { S.tab = tab.dataset.tab; try { localStorage.setItem("ch-tab", S.tab); } catch (x) {} window.scrollTo(0, 0); render(); return; }
+  if (e.target.closest("[data-close]")) { closeLead(); return; }
+  const src = e.target.closest("[data-source]");
+  if (src) { S.find.source = src.dataset.source; S.find.error = null; render(); return; }
+  const addAd = e.target.closest("[data-add-ad]");
+  if (addAd) { addFromAds(S.find.results[Number(addAd.dataset.addAd)]); return; }
+  const addJob = e.target.closest("[data-add-job]");
+  if (addJob) { addFromJob(S.find.jobs[Number(addJob.dataset.addJob)]); return; }
+  const st = e.target.closest("[data-stage]");
+  if (st && S.openLead) { S.confirmDelete = null; setStage(S.openLead, st.dataset.stage); renderDrawer(); return; }
+  const cp = e.target.closest("[data-copy]");
+  if (cp) { copyText(cp.dataset.copy); return; }
+  if (e.target.closest("#c-copy")) { const C = S.composer; copyText((C.subject ? "Subject: " + C.subject + "\n\n" : "") + C.text, $("#c-text")); return; }
+  if (e.target.closest("#c-ai")) { personalize(); return; }
+  if (e.target.closest("#c-stop")) { S.composer.ctl && S.composer.ctl.abort(); return; }
+  if (e.target.closest("#c-sent")) { markSent(); return; }
+  if (e.target.closest("#d-delete")) {
+    const id = S.openLead;
+    if (S.confirmDelete !== id) { S.confirmDelete = id; renderDrawer(); return; }
+    S.confirmDelete = null;
+    if (S.db) writeDoc("leads/" + id, () => S.db.doc("leads/" + id).delete()).then(() => toast("Lead deleted"));
+    S.leads.delete(id); closeLead(); render(); return;
+  }
+  const tp = e.target.closest("[data-tpl]");
+  if (tp) { S.tplSel = tp.dataset.tpl; render(); return; }
+  if (e.target.closest("#tpl-new")) {
+    if (!S.db) { toast("Open this page in claude.ai to save templates."); return; }
+    const id = "tpl-" + Date.now().toString(36);
+    const doc = { name: "New template", kind: "dm", use: "", subject: "", body: "Hey {{first_name}},\n\n", order: 999 };
+    S.templates.push({ _id: id, ...doc }); S.tplSel = id;
+    writeDoc("templates/" + id, () => S.db.doc("templates/" + id).set(doc)); render(); return;
+  }
+  if (e.target.closest("#t-del")) {
+    const id = S.tplSel; if (!id || !S.db) return;
+    if (S.confirmTplDelete !== id) { S.confirmTplDelete = id; toast("Click Delete again to remove this template"); return; }
+    S.confirmTplDelete = null;
+    writeDoc("templates/" + id, () => S.db.doc("templates/" + id).delete());
+    S.templates = S.templates.filter(t => t._id !== id); S.tplSel = null; render(); return;
+  }
+  const vr = e.target.closest("[data-var]");
+  if (vr) {
+    const ta = $("#t-body"); if (!ta) return;
+    const ins = "{{" + vr.dataset.var + "}}"; const p = ta.selectionStart ?? ta.value.length;
+    ta.value = ta.value.slice(0, p) + ins + ta.value.slice(ta.selectionEnd ?? p); ta.focus(); ta.setSelectionRange(p + ins.length, p + ins.length);
+    saveTemplateField("body", ta.value); return;
+  }
+  const op = e.target.closest("[data-open]");
+  if (op) { openLead(op.dataset.open); return; }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && S.openLead) closeLead();
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-open]")) { e.preventDefault(); openLead(e.target.dataset.open); }
+});
+document.addEventListener("submit", e => {
+  e.preventDefault();
+  if (e.target.id === "adform") { S.find.q = $("#f-q").value; S.find.country = $("#f-country").value; S.find.limit = $("#f-limit").value; searchAds(); }
+  if (e.target.id === "jobform") { S.find.jq = $("#f-jq").value; S.find.jloc = $("#f-jloc").value; S.find.jcountry = $("#f-jcountry").value; searchJobs(); }
+  if (e.target.id === "manualform") {
+    const brand = $("#m-brand").value.trim(); if (!brand) return;
+    const id = "m-" + slug(brand);
+    if (S.leads.has(id)) { openLead(id); return; }
+    createLead(id, { brand, source: "manual", website: $("#m-site").value.trim(), instagram: $("#m-ig").value.trim(), fit: 55 })
+      .then(ok => { if (ok) { toast(brand + " added"); openLead(id); } render(); });
+  }
+});
+document.addEventListener("input", e => {
+  const id = e.target.id;
+  if (id === "f-q") S.find.q = e.target.value;
+  if (id === "f-jq") S.find.jq = e.target.value;
+  if (id === "f-jloc") S.find.jloc = e.target.value;
+  if (id === "c-text") S.composer.text = e.target.value;
+  if (id === "c-subject") S.composer.subject = e.target.value;
+});
+const LEAD_FIELDS = ["value", "nextFollowUp", "contactName", "contactRole", "email", "instagram", "website", "phone", "notes", "lostReason"];
+function saveTemplateField(field, value) {
+  const id = S.tplSel; const t = S.templates.find(x => x._id === id);
+  if (!t || !S.db || t[field] === value) return;
+  t[field] = value;
+  writeDoc("templates/" + id, () => S.db.doc("templates/" + id).update({ [field]: value }));
+}
+document.addEventListener("change", e => {
+  const id = e.target.id;
+  if (id === "c-tpl") { applyTemplate(e.target.value); return; }
+  if (id.startsWith("d-") && S.openLead) {
+    const f = id.slice(2); const l = S.leads.get(S.openLead);
+    if (f === "needsResearch") { saveLead(S.openLead, { needsResearch: e.target.checked }); return; }
+    if (!LEAD_FIELDS.includes(f)) return;
+    let val = e.target.value; if (f === "value") val = Number(val) || 0;
+    if (l[f] === val) return;
+    const patch = { [f]: val };
+    if (["email", "instagram", "phone"].includes(f) && val && l.stage === "new") { patch.needsResearch = false; }
+    saveLead(S.openLead, patch).then(() => { if (patch.needsResearch === false && l.stage === "new") setStage(S.openLead, "researched"); });
+    if (f === "nextFollowUp" || f === "lostReason") renderDrawer();
+    return;
+  }
+  if (id.startsWith("t-") && id !== "t-del") {
+    const f = id.slice(2);
+    saveTemplateField(f, e.target.value);
+    if (f === "kind" || f === "name" || f === "use") render();
+    return;
+  }
+  if (id.startsWith("p-")) {
+    const f = id.slice(2); let val = e.target.value; if (f === "defaultValue") val = Number(val) || 0;
+    if (!S.db) { toast("Open this page in claude.ai to save."); return; }
+    S.profile = { ...S.profile, [f]: val };
+    writeDoc("settings/profile", () => S.db.doc("settings/profile").set(S.profile));
+  }
+});
+/* drag cards between columns (desktop) */
+document.addEventListener("dragstart", e => { const c = e.target.closest("[data-drag]"); if (c) { e.dataTransfer.setData("text/plain", c.dataset.drag); e.dataTransfer.effectAllowed = "move"; } });
+document.addEventListener("dragover", e => { const col = e.target.closest("[data-col]"); if (col) { e.preventDefault(); document.querySelectorAll(".col.drop").forEach(c => c !== col && c.classList.remove("drop")); col.classList.add("drop"); } });
+document.addEventListener("dragleave", e => { const col = e.target.closest("[data-col]"); if (col && !col.contains(e.relatedTarget)) col.classList.remove("drop"); });
+document.addEventListener("drop", e => {
+  const col = e.target.closest("[data-col]"); if (!col) return; e.preventDefault(); col.classList.remove("drop");
+  const id = e.dataTransfer.getData("text/plain"); if (id && S.leads.has(id)) { setStage(id, col.dataset.col); render(); }
+});
+
+/* ---------- boot ---------- */
+render();
+const use = n => (window.claude && typeof window.claude.use === "function") ? window.claude.use(n).catch(() => null) : Promise.resolve(null);
+
+use("db").then(db => {
+  if (!db) { S.dbState = "none"; render(); return; }
+  S.db = db;
+  db.collection("leads").onSnapshot(snap => {
+    const m = new Map();
+    snap.docs.forEach(d => m.set(d.id, { _id: d.id, ...d.data() }));
+    S.leads = m; S.dbState = "ready";
+    if (!(document.activeElement && document.activeElement.closest && document.activeElement.closest(".drawer, form, .tpl-layout"))) render();
+    else renderTabs();
+  }, err => { S.dbState = err && err.code === "revoked" ? "none" : S.dbState; render(); });
+  db.collection("templates").onSnapshot(snap => {
+    S.templates = snap.docs.map(d => ({ _id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || String(a.name).localeCompare(String(b.name)));
+    if (S.tab === "templates" && document.activeElement && document.activeElement.closest && document.activeElement.closest(".tpl-layout")) return;
+    render();
+  }, () => {});
+  db.doc("settings/profile").onSnapshot(d => {
+    S.profile = d.exists ? { ...d.data() } : {};
+    if (!(document.activeElement && /^p-/.test(document.activeElement.id || ""))) render();
+  }, () => {});
+});
+use("mcp").then(m => { S.mcp = m; renderTabs(); if (S.tab === "find") render(); });
+use("sample").then(s => { S.sample = s; renderTabs(); });
+})();
+</script>
