@@ -412,22 +412,26 @@ const INVITE = {
     }
   },
 
+  // Each event can have its own picture (art) and focus point (artPos). Without one it uses couple.jpg.
   events: [
     { key: "dholki", name: "Dholki",
       start: "2027-03-06T20:00:00+05:00", end: "2027-03-06T23:59:00+05:00", timeNote: "onwards",
       venue: "Dholki at home", address: "Block E, Sabzazar Scheme, Lahore", maps: "Sabzazar Scheme Lahore" },
     { key: "mehndi", name: "Mehndi",
       start: "2027-03-08T19:00:00+05:00", end: "2027-03-08T23:59:00+05:00", timeNote: "onwards",
-      venue: "Rehman House", address: "Block E, Sabzazar Scheme, Lahore", maps: "Sabzazar Scheme Lahore" },
+      venue: "Rehman House", address: "Block E, Sabzazar Scheme, Lahore", maps: "Sabzazar Scheme Lahore",
+      art: "mehndi.jpg", artPos: "50% 100%" },
     { key: "nikkah", name: "Nikkah",
       start: "2027-03-10T16:00:00+05:00", end: "2027-03-10T18:00:00+05:00", timeNote: "sharp",
       venue: "Neighbourhood Masjid", address: "Model Town, Lahore", maps: "Model Town Lahore" },
     { key: "baraat", name: "Baraat",
       start: "2027-03-10T19:00:00+05:00", end: "2027-03-10T23:59:00+05:00", timeNote: "onwards",
-      venue: "The Garden Marquee", address: "Main Boulevard, Johar Town, Lahore", maps: "Johar Town Lahore" },
+      venue: "The Garden Marquee", address: "Main Boulevard, Johar Town, Lahore", maps: "Johar Town Lahore",
+      art: "baraat.jpg", artPos: "50% 0%", artBg: "#ffffff" },
     { key: "walima", name: "Walima",
       start: "2027-03-12T19:00:00+05:00", end: "2027-03-12T23:30:00+05:00", timeNote: "onwards",
-      venue: "Hall 1, Pearl Banquet", address: "DHA Phase 5, Lahore", maps: "DHA Phase 5 Lahore" }
+      venue: "Hall 1, Pearl Banquet", address: "DHA Phase 5, Lahore", maps: "DHA Phase 5 Lahore",
+      art: "walima.jpg", artPos: "40% 100%", artBg: "#ffffff" }
   ],
 
   faq: [
@@ -637,7 +641,7 @@ const INVITE = {
   $("events").innerHTML = events.map((e) => `
     <section class="slide ev-slide" id="ev-${esc(e.key)}" aria-label="${esc(e.name)}">
       <div class="inner">
-        <div class="ev-art reveal"><img src="couple.jpg" alt="" loading="lazy"></div>
+        <div class="ev-art reveal"${e.artBg ? ` style="background:${esc(e.artBg)}"` : ""}><img src="${esc(e.art || "couple.jpg")}" style="object-position:${esc(e.artPos || "50% 100%")}" alt="" loading="lazy"></div>
         <span class="dot reveal" aria-hidden="true"></span>
         <h3 class="ev-name reveal">${esc(e.name)}</h3>
         <p class="guests reveal" data-guests hidden></p>
