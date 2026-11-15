@@ -98,7 +98,7 @@ body.opened .home-light { opacity: 1; animation: glowp 5s ease-in-out 3.5s infin
 .home-text { position: absolute; left: 27%; right: 27%; top: 30%; display: flex; flex-direction: column; align-items: center; gap: 1.4cqw; text-align: center; }
 .home-text p { margin: 0; }
 .home-text .wl { font-size: 2.6cqw; letter-spacing: .34em; text-transform: uppercase; color: #8d6a5c; }
-.home-text .nm { font-family: var(--f-script); font-weight: 400; font-size: 10.5cqw; line-height: 1; color: var(--maroon); margin: 0; display: flex; flex-direction: column; align-items: center; text-shadow: 0 1px 0 rgba(255, 255, 255, .7); }
+.home-text .nm { font-family: var(--f-script); font-weight: 400; font-size: 8.4cqw; text-wrap: balance; line-height: 1; color: var(--maroon); margin: 0; display: flex; flex-direction: column; align-items: center; text-shadow: 0 1px 0 rgba(255, 255, 255, .7); }
 .home-text .nm .amp { font-size: .42em; color: #a3806f; margin: .5cqw 0; }
 .home-text .dt { font-size: 2.9cqw; letter-spacing: .26em; text-transform: uppercase; color: #6d5148; }
 .home .petal-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
@@ -384,8 +384,9 @@ textarea.input { min-height: 84px; resize: vertical; }
    Dates use Pakistan time (+05:00). Phone numbers: any format.
    ===================================================================== */
 const INVITE = {
-  groom: "Ayaan",
-  bride: "Zoya",
+  groom: "Habib Ullah",
+  bride: "Rameen",
+  weddingDate: "2027-11-14T19:00:00+05:00",   // the main date shown on the home screen
   city: "Lahore",
   timeZone: "Asia/Karachi",
   shareLink: "",            // paste your final invite link here once it's live
@@ -415,21 +416,22 @@ const INVITE = {
   // Each event can have its own picture (art) and focus point (artPos). Without one it uses couple.jpg.
   events: [
     { key: "dholki", name: "Dholki",
-      start: "2027-03-06T20:00:00+05:00", end: "2027-03-06T23:59:00+05:00", timeNote: "onwards",
+      start: "2027-11-10T20:00:00+05:00", end: "2027-11-10T23:59:00+05:00", timeNote: "onwards",
       venue: "Dholki at home", address: "Block E, Sabzazar Scheme, Lahore", maps: "Sabzazar Scheme Lahore" },
     { key: "mehndi", name: "Mehndi",
-      start: "2027-03-08T19:00:00+05:00", end: "2027-03-08T23:59:00+05:00", timeNote: "onwards",
+      start: "2027-11-12T19:00:00+05:00", end: "2027-11-12T23:59:00+05:00", timeNote: "onwards",
       venue: "Rehman House", address: "Block E, Sabzazar Scheme, Lahore", maps: "Sabzazar Scheme Lahore",
       art: "mehndi.jpg", artPos: "50% 100%" },
     { key: "nikkah", name: "Nikkah",
-      start: "2027-03-10T16:00:00+05:00", end: "2027-03-10T18:00:00+05:00", timeNote: "sharp",
-      venue: "Neighbourhood Masjid", address: "Model Town, Lahore", maps: "Model Town Lahore" },
+      start: "2027-11-14T16:00:00+05:00", end: "2027-11-14T18:00:00+05:00", timeNote: "sharp",
+      venue: "Neighbourhood Masjid", address: "Model Town, Lahore", maps: "Model Town Lahore",
+      art: "nikkah.jpg", artPos: "56% 50%" },
     { key: "baraat", name: "Baraat",
-      start: "2027-03-10T19:00:00+05:00", end: "2027-03-10T23:59:00+05:00", timeNote: "onwards",
+      start: "2027-11-14T19:00:00+05:00", end: "2027-11-14T23:59:00+05:00", timeNote: "onwards",
       venue: "The Garden Marquee", address: "Main Boulevard, Johar Town, Lahore", maps: "Johar Town Lahore",
-      art: "baraat.jpg", artPos: "50% 0%", artBg: "#ffffff" },
+      art: "baraat.jpg", artPos: "50% 50%", artBg: "#ffffff" },
     { key: "walima", name: "Walima",
-      start: "2027-03-12T19:00:00+05:00", end: "2027-03-12T23:30:00+05:00", timeNote: "onwards",
+      start: "2027-11-16T19:00:00+05:00", end: "2027-11-16T23:30:00+05:00", timeNote: "onwards",
       venue: "Hall 1, Pearl Banquet", address: "DHA Phase 5, Lahore", maps: "DHA Phase 5 Lahore",
       art: "walima.jpg", artPos: "40% 100%", artBg: "#ffffff" }
   ],
@@ -442,7 +444,7 @@ const INVITE = {
 
   rsvp: {
     whatsapp: "+92 300 0000000",   // number that receives RSVPs
-    by: "20 February 2027",
+    by: "1 November 2027",
     maxSeats: 8
   },
 
@@ -624,12 +626,13 @@ const INVITE = {
   const namesHTML = `<span>${esc(INVITE.groom)}</span><span class="amp">&amp;</span><span>${esc(INVITE.bride)}</span>`;
   $("hero-names").innerHTML = namesHTML;
   $("arch-names").innerHTML = namesHTML;
-  $("home-date").textContent = fDate.format(events[0].s);
+  const mainDate = new Date(INVITE.weddingDate || events[0].start);
+  $("home-date").textContent = fDate.format(mainDate);
   $("close-h").innerHTML = namesHTML;
   $("message").textContent = INVITE.message;
   $("chips").innerHTML = events.map((e) => `<a class="chip" href="#ev-${esc(e.key)}" data-jump="${esc(e.key)}">${esc(e.name)}</a>`).join("");
   $("closing").textContent = INVITE.closing;
-  $("footer").textContent = `${fDate.format(events[0].s)} · ${INVITE.city}`;
+  $("footer").textContent = `${fDate.format(new Date(INVITE.weddingDate || events[0].start))} · ${INVITE.city}`;
 
   const gcalDate = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const gcal = (e) => "https://calendar.google.com/calendar/render?action=TEMPLATE"
