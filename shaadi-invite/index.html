@@ -84,6 +84,30 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .scroll-hint svg { width: 18px; height: 18px; animation: bob 1.8s ease-in-out infinite; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
 
+/* ---------- Home: the couple under the bougainvillea arch ---------- */
+.home { padding: 0; background: #efe3d4; }
+.home-stage { position: absolute; left: 50%; top: 50%; width: max(100%, calc(100svh * 0.563)); aspect-ratio: 474 / 842; transform: translate(-50%, -50%); container-type: inline-size; }
+.home-art { position: absolute; inset: 0; overflow: hidden; }
+.home-art img { width: 100%; height: 100%; display: block; transform: scale(1.22); transform-origin: 50% 72%; transition: transform 4.5s cubic-bezier(.2, .7, .2, 1); }
+body.opened .home-art img { transform: scale(1); }
+.home-art img.breathe { animation: drift 14s ease-in-out infinite alternate; transition: none; }
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.05) translateY(-1%); } }
+.home-light { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(30% 20% at 50% 40%, rgba(255, 250, 238, .7), transparent 70%); mix-blend-mode: screen; opacity: 0; transition: opacity 2s ease 1.5s; }
+body.opened .home-light { opacity: 1; animation: glowp 5s ease-in-out 3.5s infinite; }
+@keyframes glowp { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+.home-text { position: absolute; left: 27%; right: 27%; top: 30%; display: flex; flex-direction: column; align-items: center; gap: 1.4cqw; text-align: center; }
+.home-text p { margin: 0; }
+.home-text .wl { font-size: 2.6cqw; letter-spacing: .34em; text-transform: uppercase; color: #8d6a5c; }
+.home-text .nm { font-family: var(--f-script); font-weight: 400; font-size: 10.5cqw; line-height: 1; color: var(--maroon); margin: 0; display: flex; flex-direction: column; align-items: center; text-shadow: 0 1px 0 rgba(255, 255, 255, .7); }
+.home-text .nm .amp { font-size: .42em; color: #a3806f; margin: .5cqw 0; }
+.home-text .dt { font-size: 2.9cqw; letter-spacing: .26em; text-transform: uppercase; color: #6d5148; }
+.home .petal-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.home .scroll-hint { color: #fff; text-shadow: 0 1px 6px rgba(0, 0, 0, .45); z-index: 3; }
+
+/* Event screens: the couple in an arched gold frame */
+.ev-art { width: min(220px, 58vw); aspect-ratio: .82; border-radius: 999px 999px 14px 14px; overflow: hidden; border: 3px solid #e7c48a; box-shadow: 0 0 0 6px rgba(255, 255, 255, .08), 0 18px 34px rgba(30, 0, 10, .45); background: #efe3d4; }
+.ev-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; display: block; }
+
 /* ---------- Dear guests ---------- */
 .dear-title { font-family: var(--f-display); font-weight: 400; font-size: clamp(32px, 9vw, 40px); margin: 0; color: var(--ink); }
 .note-wrap { position: relative; width: 100%; max-width: 340px; padding: 26px 22px; }
@@ -242,7 +266,21 @@ textarea.input { min-height: 84px; resize: vertical; }
     </div>
   </section>
 
-  <section class="slide arch-slide" aria-labelledby="hero-names">
+  <section class="slide home" aria-labelledby="hero-names">
+    <div class="home-stage">
+      <div class="home-art"><img id="home-img" src="couple.jpg" alt="Illustration of the bride and groom under an arch of bougainvillea"></div>
+      <div class="home-light" aria-hidden="true"></div>
+      <div class="home-text">
+        <p class="wl reveal">With love</p>
+        <h1 class="nm reveal" id="hero-names"></h1>
+        <p class="dt reveal" id="home-date"></p>
+      </div>
+    </div>
+    <canvas class="petal-layer" id="home-petals" aria-hidden="true"></canvas>
+    <div class="scroll-hint" aria-hidden="true">Scroll<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9l6 6 6-6"/></svg></div>
+  </section>
+
+  <section class="slide arch-slide" aria-label="Bismillah">
     <div class="archbox">
       <svg class="arch-svg" viewBox="0 0 100 200" preserveAspectRatio="xMidYMin slice" aria-hidden="true"></svg>
       <div class="arch-content">
@@ -250,10 +288,9 @@ textarea.input { min-height: 84px; resize: vertical; }
         <p class="withlove reveal">With love</p>
         <p class="bless reveal" id="intro"></p>
         <svg class="heart reveal" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11Z"/></svg>
-        <h1 class="couple-names reveal" id="hero-names" style="margin: 0"></h1>
+        <p class="couple-names reveal" id="arch-names" style="margin: 0; font-size: clamp(40px, 11vw, 52px)"></p>
       </div>
     </div>
-    <div class="scroll-hint" aria-hidden="true">Scroll<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9l6 6 6-6"/></svg></div>
   </section>
 
   <section class="slide" aria-labelledby="dear">
@@ -488,7 +525,6 @@ const INVITE = {
       <path d="M62 52 Q60 78 40 96 Q44 100 49 98 Q66 80 66 56Z" fill="#b8222f" opacity=".92"/>
       <path d="M62 52 Q60 78 40 96" fill="none" stroke="${GOLD}" stroke-width="1.2" stroke-dasharray="1 1.8"/>`;
   }
-  const coupleSVG = `<svg class="couple" viewBox="0 0 150 220" aria-hidden="true"><g transform="translate(4 0)">${groom()}</g><g transform="translate(50 4) scale(.97)">${bride()}</g></svg>`;
   const groomSVG = `<svg viewBox="0 0 100 220" aria-hidden="true">${groom()}</svg>`;
   const brideSVG = `<svg viewBox="0 0 100 220" aria-hidden="true">${bride()}</svg>`;
 
@@ -583,6 +619,8 @@ const INVITE = {
   $("intro").textContent = INVITE.intro;
   const namesHTML = `<span>${esc(INVITE.groom)}</span><span class="amp">&amp;</span><span>${esc(INVITE.bride)}</span>`;
   $("hero-names").innerHTML = namesHTML;
+  $("arch-names").innerHTML = namesHTML;
+  $("home-date").textContent = fDate.format(events[0].s);
   $("close-h").innerHTML = namesHTML;
   $("message").textContent = INVITE.message;
   $("chips").innerHTML = events.map((e) => `<a class="chip" href="#ev-${esc(e.key)}" data-jump="${esc(e.key)}">${esc(e.name)}</a>`).join("");
@@ -599,7 +637,7 @@ const INVITE = {
   $("events").innerHTML = events.map((e) => `
     <section class="slide ev-slide" id="ev-${esc(e.key)}" aria-label="${esc(e.name)}">
       <div class="inner">
-        <div class="reveal">${coupleSVG}</div>
+        <div class="ev-art reveal"><img src="couple.jpg" alt="" loading="lazy"></div>
         <span class="dot reveal" aria-hidden="true"></span>
         <h3 class="ev-name reveal">${esc(e.name)}</h3>
         <p class="guests reveal" data-guests hidden></p>
@@ -723,7 +761,7 @@ const INVITE = {
   const animOK = !reduced && "IntersectionObserver" in window;
   if (animOK) {
     document.documentElement.classList.add("anim");
-    document.querySelectorAll(".slide").forEach((sl) => sl.querySelectorAll(".reveal").forEach((el, i) => el.style.setProperty("--d", Math.min(i, 9) * 120 + "ms")));
+    document.querySelectorAll(".slide").forEach((sl) => sl.querySelectorAll(".reveal").forEach((el, i) => el.style.setProperty("--d", (sl.classList.contains("home") ? 1400 + i * 450 : Math.min(i, 9) * 120) + "ms")));
   }
   function startReveal() {
     if (!animOK) return;
@@ -735,12 +773,54 @@ const INVITE = {
     document.querySelectorAll(".slide").forEach((s) => io.observe(s));
   }
 
+  /* ---------- Home animation: zoom out, glow, falling bougainvillea ---------- */
+  const hp = $("home-petals"), hx = hp.getContext("2d");
+  let HW = 0, HH = 0, homeVisible = true, petalsOn = false, hraf = 0;
+  const bloom = ["#d6337f", "#c2185b", "#e85a9c", "#f06292", "#b0124f", "#f48fb1"];
+  const hpet = [];
+  function sizeHome() {
+    const r = hp.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+    HW = r.width; HH = r.height; hp.width = HW * dpr; hp.height = HH * dpr; hx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener("resize", sizeHome); sizeHome();
+  function addPetal(top) {
+    hpet.push({ x: Math.random() * HW, y: top ? -15 : Math.random() * HH * 0.6, vy: 0.45 + Math.random() * 0.7, vx: (Math.random() - 0.5) * 0.4,
+      r: 4 + Math.random() * 5, rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.04, sw: Math.random() * 6.28, c: bloom[(Math.random() * bloom.length) | 0] });
+  }
+  function petalFrame() {
+    hx.clearRect(0, 0, HW, HH);
+    if (homeVisible && hpet.length < 26 && Math.random() < 0.08) addPetal(true);
+    for (let i = hpet.length - 1; i >= 0; i--) {
+      const p = hpet[i];
+      p.sw += 0.03; p.x += p.vx + Math.sin(p.sw) * 0.7; p.y += p.vy; p.rot += p.vr;
+      if (p.y > HH + 20) { hpet.splice(i, 1); continue; }
+      hx.save(); hx.translate(p.x, p.y); hx.rotate(p.rot); hx.scale(1, 0.6 + 0.4 * Math.abs(Math.sin(p.sw)));
+      hx.fillStyle = p.c; hx.globalAlpha = 0.9; hx.beginPath();
+      hx.moveTo(0, -p.r); hx.quadraticCurveTo(p.r, -p.r * 0.2, 0, p.r); hx.quadraticCurveTo(-p.r, -p.r * 0.2, 0, -p.r); hx.fill();
+      hx.globalAlpha = 0.35; hx.fillStyle = "#fff"; hx.beginPath(); hx.ellipse(-p.r * 0.15, -p.r * 0.2, p.r * 0.18, p.r * 0.45, 0, 0, Math.PI * 2); hx.fill();
+      hx.restore();
+    }
+    hraf = homeVisible || hpet.length ? requestAnimationFrame(petalFrame) : 0;
+  }
+  function startHome() {
+    document.body.classList.add("opened");
+    setTimeout(() => $("home-img").classList.add("breathe"), reduced ? 0 : 4600);
+    if (reduced || petalsOn) return;
+    petalsOn = true; sizeHome();
+    for (let i = 0; i < 10; i++) addPetal(false);
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(([en]) => { homeVisible = en.isIntersecting; if (homeVisible && !hraf) hraf = requestAnimationFrame(petalFrame); }, { threshold: 0.05 }).observe(hp);
+    }
+    hraf = requestAnimationFrame(petalFrame);
+  }
+
   /* ---------- Envelope ---------- */
   const gate = $("gate");
-  if (location.hash === "#host") { gate.hidden = true; startReveal(); }
+  if (location.hash === "#host") { gate.hidden = true; startReveal(); startHome(); }
   else document.body.classList.add("locked");
   $("open-btn").addEventListener("click", () => {
     gate.classList.add("opening");
+    setTimeout(startHome, reduced ? 0 : 700);
     if (audio) audio.play().then(() => setMusic(true)).catch(() => {});
     setTimeout(startReveal, reduced ? 0 : 1100);
     setTimeout(() => { gate.hidden = true; document.body.classList.remove("locked"); }, reduced ? 50 : 2000);
@@ -749,7 +829,7 @@ const INVITE = {
   addEventListener("hashchange", () => {
     if (location.hash.startsWith("#ev-")) return;
     applyGuest();
-    if (location.hash === "#host") { gate.hidden = true; document.body.classList.remove("locked"); startReveal(); }
+    if (location.hash === "#host") { gate.hidden = true; document.body.classList.remove("locked"); startReveal(); startHome(); }
   });
   $("chips").addEventListener("click", (ev) => {
     const a = ev.target.closest("[data-jump]"); if (!a) return;
